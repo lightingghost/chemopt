@@ -1,0 +1,27 @@
+{
+    "log_path": "./log/",
+    "save_path": "./ckpt/8_dim_quad/h128_s50_srnn/",
+    "batch_size": 128,
+    "hidden_size": 128,
+    "num_layers": 2,
+    "batch_norm": false,
+    "reuse": false,
+    "num_epochs": 50000,
+    "log_period": 100,
+    "evaluation_period": 1000,
+    "evaluation_epochs": 20,
+    "reaction_type": "quad",
+    "norm_cov": 0.3,
+    "constraints": false,
+    "num_params": 3,
+    "instrument_error": null,
+    "num_steps": 50,
+    "unroll_length": 50,
+    "learning_rate": 0.001,
+    "optimizer": "Adam",
+    "loss_type": "oi",
+    "discount_factor": 0.97,
+    "opt_direction": "min",
+    "policy": "srnn"
+    
+}
