@@ -19,6 +19,14 @@ edit the hyperparameters in `config.json` and execute
 python lets_start.py
 ```
 
+# Use
+after training, execute
+
+```python
+python realreaction.py
+```
+
+to access the interactive interface for optimizing a real reaction.
 
 # Implementation references
 
