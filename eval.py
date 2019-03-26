@@ -18,26 +18,29 @@ logger = logging.getLogger()
 
 def main():
 
+
     config_file = open('./config.json')
     config = json.load(config_file,
                        object_hook=lambda d:namedtuple('x', d.keys())(*d.values()))
     num_unrolls = config.num_steps // config.unroll_length
     with tf.Session() as sess:
         model = util.load_model(sess, config, logger)
-        _, loss, reset, fx_array, x_array = model.step()
-        cost, others = util.run_epoch(sess, loss, [fx_array, x_array],
-            reset, num_unrolls)
-        Y, X = others
-        Yp = []
-        for i in range(config.batch_size):
-            arr = np.squeeze(Y[:, i])
-            if arr[-1] <= 0.3:
-                Yp.append(arr)
+        all_y = []
+        for i in range(10):
+            print(i)
+            _, loss, reset, fx_array, x_array = model.step()
+            cost, others = util.run_epoch(sess, loss, [fx_array, x_array],
+                reset, num_unrolls)
+            Y, X = others
+            all_y.append(Y)
 
-        np.save('./scratch/gmm0.npy', np.array(Yp))
-        plt.figure(1)
-        plt.plot(np.squeeze(Y))
-        plt.show()
+    all_y = np.hstack(all_y)
+    np.save('srnn.npy', all_y)
+    plt.figure(1)
+    y_mean = np.mean(all_y, axis=1)
+    plt.plot(y_mean)
+    print(min(y_mean))
+    plt.show()
 
 
 if __name__ == '__main__':

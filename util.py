@@ -5,6 +5,7 @@ import tensorflow as tf
 
 import rnn
 from model import Optimizer
+from shutil import copyfile
 
 
 def run_epoch(sess, cost_op, ops, reset, num_unrolls):
@@ -18,6 +19,7 @@ def create_model(sess, config, logger):
     if not config.save_path == None:
         if not os.path.exists(config.save_path):
             os.mkdir(config.save_path)
+    copyfile('config.json', os.path.join(config.save_path, 'config.json'))  
 
     if config.opt_direction == 'max':
         problem_type = 'concave'
@@ -64,6 +66,7 @@ def create_model(sess, config, logger):
         ndim=config.num_params, batch_size=config.batch_size,
         unroll_len=config.unroll_length, lr=config.learning_rate,
         loss_type=config.loss_type, optimizer=config.optimizer,
+        trainable_init=config.trainable_init,
         direction=config.opt_direction, constraints=config.constraints,
         discount_factor=config.discount_factor)
 
@@ -126,6 +129,7 @@ def load_model(sess, config, logger):
         ndim=config.num_params, batch_size=config.batch_size,
         unroll_len=config.unroll_length, lr=config.learning_rate,
         loss_type=config.loss_type, optimizer=config.optimizer,
+        trainable_init=config.trainable_init,
         direction=config.opt_direction, constraints=config.constraints,
         discount_factor=config.discount_factor)
 

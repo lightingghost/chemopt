@@ -54,29 +54,38 @@ class GMM:
                  cov=0.1, dtype=tf.float32):
         self.ncoef = ncoef
         self.num_dim = num_dims
-        self.m = [tf.get_variable('mu_{}'.format(i), shape=[batch_size, num_dims],
-            dtype=dtype,
-            initializer=tf.random_uniform_initializer(minval=0.01, maxval=0.99),
-            trainable=False)
-                  for i in range(ncoef)]
+        self.batch_size = batch_size
+        self.dtype = dtype
+        with tf.variable_scope('func_gmm'):
+            self.m = [tf.get_variable('mu_{}'.format(i), shape=[batch_size, num_dims],
+                dtype=dtype,
+                initializer=tf.random_uniform_initializer(minval=0.01, maxval=0.99),
+                trainable=False)
+                      for i in range(ncoef)]
 
-        self.cov = [tf.get_variable('cov_{}'.format(i), shape=[batch_size, num_dims],
-            dtype=dtype,
-            initializer=tf.truncated_normal_initializer(
-                mean=cov, stddev=cov/5),
-            trainable=False)
-                  for i in range(ncoef)]
+            self.cov = [tf.get_variable('cov_{}'.format(i), shape=[batch_size, num_dims],
+                dtype=dtype,
+                initializer=tf.truncated_normal_initializer(
+                    mean=cov, stddev=cov/5),
+                trainable=False)
+                      for i in range(ncoef)]
 
-        self.coef = tf.get_variable('coef', shape=[ncoef, 1], dtype=dtype,
-            initializer=tf.random_normal_initializer(stddev=0.2),
-            trainable=False)
+            self.coef = tf.get_variable('coef', shape=[ncoef, 1], dtype=dtype,
+                initializer=tf.random_normal_initializer(stddev=0.2),
+                trainable=False)
 
+            self.random = random
+            # if random is not None:
+                # self.e = tf.random_normal(shape=[batch_size, ], stddev=random,
+                                          # dtype=dtype, name='error')
+            # else:
+                # self.e = 0.0
 
-        if random is not None:
-            self.e = tf.random_normal(shape=[batch_size, ], stddev=random,
-                                      dtype=dtype, name='error')
-        else:
-            self.e = 0.0
+            self.cst = (2 * 3.14159) ** (- self.num_dim / 2)
+            modes = tf.concat([(1 / tf.reduce_prod(cov, axis=1, keep_dims=True))
+                               for cov in self.cov], axis=1) * tf.transpose(self.coef)
+            self.tops = tf.reduce_max(modes, axis=1, keep_dims=True)
+            self.bots = tf.reduce_min(modes, axis=1, keep_dims=True)
 
     def get_parameters(self):
         return self.m + self.cov + [self.coef]
@@ -85,16 +94,16 @@ class GMM:
         dist = [tf.contrib.distributions.MultivariateNormalDiag(
                     self.m[i], self.cov[i], name='MultVarNorm_{}'.format(i))
                 for i in range(self.ncoef)]
-        p = tf.concat([tf.reshape(dist[i].pdf(x), [-1, 1])
+        p = tf.concat([tf.reshape(dist[i].prob(x), [-1, 1])
                        for i in range(self.ncoef)], axis=1)
-        cst = (2 * 3.14159) ** (- self.num_dim / 2)
-        modes = tf.concat([(1 / tf.reduce_prod(cov, axis=1, keep_dims=True))
-                           for cov in self.cov], axis=1) * tf.transpose(self.coef)
-        tops = tf.reduce_max(modes, axis=1, keep_dims=True)
-        bots = tf.reduce_min(modes, axis=1, keep_dims=True)
 
         fx = tf.matmul(p, self.coef)
-        result = (fx / cst - bots) / (tops - bots)
+        result = (fx / self.cst - self.bots) / (self.tops - self.bots)
+        # import pdb; pdb.set_trace()
+        if self.random:
+            result = result + tf.random_normal(shape=[self.batch_size, 1], 
+                    stddev=self.random,
+                    dtype=self.dtype, name='error')
         return result
 
 

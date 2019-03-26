@@ -27,30 +27,33 @@ def main():
         model = util.create_model(sess, config, logger)
         step, loss, reset, fx_array, x_array = model.step()
 
-        best_evaluation = float('inf')
+        best_cost = [float('inf')] * 3
+        epoch_cost = 0
         total_cost = 0
+
         for e in range(config.num_epochs):
             cost, _ = util.run_epoch(sess, loss, [step], reset, num_unrolls)
+            epoch_cost += cost
             total_cost += cost
 
             if (e + 1) % config.log_period == 0:
-                lm_e = total_cost / config.log_period
+                lm_e = epoch_cost / config.log_period
                 logger.info('Epoch {}, Mean Error: {:.3f}'.format(e, lm_e))
-                total_cost = 0
+                epoch_cost = 0
 
             if (e + 1) % config.evaluation_period == 0:
-                eval_cost = 0
-                for _ in range(config.evaluation_epochs):
-                    cost, _ = util.run_epoch(sess, loss, [step, ], reset,
-                                      num_unrolls)
-                    eval_cost += cost
-                elm_e = eval_cost / config.evaluation_epochs
-                logger.info('EVALUATION, Mean Error: {:.3f}'.format(elm_e))
+                elm_e = total_cost / config.evaluation_period
+                logger.info('Current {} epochs, Mean Error: {:.3f}'.format(config.evaluation_period, elm_e))
 
-                if config.save_path is not None and eval_cost < best_evaluation:
+                mbc = max(best_cost)
+                if config.save_path is not None and total_cost < mbc:
+                    best_cost.remove(mbc)
+                    best_cost.append(total_cost)
                     logger.info('Save current model ...')
                     model.saver.save(sess, config.save_path, global_step=e)
-                    best_evaluation = eval_cost
+
+                total_cost = 0
+
 
 if __name__ == '__main__':
     main()

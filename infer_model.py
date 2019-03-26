@@ -112,18 +112,33 @@ def main():
                              random=config.instrument_error,
                              ptype=problem_type)
 
-    cell = rnn.StochasticRNNCell(cell=rnn.LSTM,
-                                 kwargs={'hidden_size':config.hidden_size},
+    if config.policy == 'srnn':
+        cell = rnn.StochasticRNNCell(cell=rnn.LSTM,
+                                 kwargs=
+                                 {'hidden_size':config.hidden_size,
+                                  'use_batch_norm_h':config.batch_norm,
+                                  'use_batch_norm_x':config.batch_norm,
+                                  'use_batch_norm_c':config.batch_norm,},
                                  nlayers=config.num_layers,
                                  reuse=config.reuse)
+    if config.policy == 'rnn':
+        cell = rnn.MultiInputRNNCell(cell=rnn.LSTM,
+                                 kwargs=
+                                 {'hidden_size':config.hidden_size,
+                                  'use_batch_norm_h':config.batch_norm,
+                                  'use_batch_norm_x':config.batch_norm,
+                                  'use_batch_norm_c':config.batch_norm,},
+                                 nlayers=config.num_layers,
+                                 reuse=config.reuse)
+
     optimizer = StepOptimizer(cell=cell, func=func, ndim=config.num_params,
                               nsteps=config.num_steps,
                               ckpt_path=config.save_path, logger=logger,
                               constraints=config.constraints)
     x_array, y_array = optimizer.run()
 
-    np.savetxt('./scratch/nn_y.csv', y_array, delimiter=',')
-    np.save('./scratch/nn_x.npy', y_array)
+    # np.savetxt('./scratch/nn_y.csv', y_array, delimiter=',')
+    # np.save('./scratch/nn_x.npy', y_array)
     plt.figure(1)
     plt.plot(y_array)
     plt.show()

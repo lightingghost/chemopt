@@ -6,12 +6,13 @@ from tensorflow.python.util import nest
 
 class Optimizer:
     def __init__(self, cell, logger, func, ndim, batch_size, unroll_len,
-                 lr=0.01, loss_type='naive', optimizer='Adam',
+                 lr=0.01, loss_type='naive', optimizer='Adam', trainable_init=False,
                  direction='max', constraints=False, discount_factor=1.0):
         self.batch_size = batch_size
         self.constraints = constraints
         self.logger = logger
         self.cell = cell
+        self.trainable_init = trainable_init
         self.df = self.make_discount(discount_factor, unroll_len)
         self.make_loss(func, ndim, batch_size, unroll_len)
         loss_func = self.get_loss_func(loss_type, direction)
@@ -23,8 +24,10 @@ class Optimizer:
 
         # self.opt = optimizer.minimize(self.loss)
         self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=3)
-        logger.debug('model variable:')
-        logger.debug(str([var.name for var in tf.global_variables()]))
+        logger.info('model variable:')
+        logger.info(str([var.name for var in tf.global_variables()]))
+        logger.info('trainable variables:')
+        logger.info(str([var.name for var in tf.trainable_variables()]))
         self.fx_array = self.fx_array.stack()
         self.x_array = self.x_array.stack()
 
@@ -37,7 +40,8 @@ class Optimizer:
     def make_loss(self, func, ndim, batch_size, unroll_len):
         self.unroll_len = unroll_len
         x = tf.get_variable('x', shape=[batch_size, ndim],
-                            initializer=tf.truncated_normal_initializer(mean=0.5, stddev=0.2))
+                            initializer=tf.truncated_normal_initializer(mean=0.5, stddev=0.2),
+                            trainable=self.trainable_init)
         constants = func.get_parameters()
         state = self.cell.get_initial_state(batch_size, tf.float32)
         self.fx_array = tf.TensorArray(tf.float32,
