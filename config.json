@@ -22,6 +22,7 @@
     "loss_type": "oi",
     "discount_factor": 0.97,
     "opt_direction": "min",
-    "policy": "srnn"
+    "policy": "srnn",
+    "trainable_init": true
     
 }
