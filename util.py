@@ -19,7 +19,7 @@ def create_model(sess, config, logger):
     if not config.save_path == None:
         if not os.path.exists(config.save_path):
             os.mkdir(config.save_path)
-    copyfile('config.json', os.path.join(config.save_path, 'config.json'))  
+    copyfile('config.json', os.path.join(config.save_path, 'config.json'))
 
     if config.opt_direction == 'max':
         problem_type = 'concave'
@@ -77,7 +77,7 @@ def create_model(sess, config, logger):
         model.saver.restore(sess, ckpt.model_checkpoint_path)
     else:
         logger.info('Creating Model with fresh parameters.')
-        sess.run(tf.global_variables_initializer())
+        sess.run(tf.compat.v1.global_variables_initializer())
     return model
 
 def load_model(sess, config, logger):
@@ -202,7 +202,7 @@ def trainable_initial_state(batch_size, state_size, dtype, initializers=None):
 
     for name, size, init in zip(names, flat_state_size, flat_initializer):
         shape_with_batch_dim = [1] + tensor_shape.as_shape(size).as_list()
-        initial_state_variable = tf.get_variable(
+        initial_state_variable = tf.compat.v1.get_variable(
             name, shape=shape_with_batch_dim, dtype=dtype, initializer=init)
 
         initial_state_variable_dims = initial_state_variable.get_shape().ndims

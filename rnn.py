@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow_probability as tfp
 import batch_norm
 import util
 import pdb
@@ -33,8 +34,8 @@ class MultiInputLSTM(LSTMCell):
         inputs = tf.concat([x, tf.reshape(y, (-1, 1))],
                            axis=1, name='inputs')
         output, nstate = self.cell(inputs, state)
-        with tf.variable_scope('proj'):
-            w = tf.get_variable('proj_weight', [self._num_units, x_dim])
+        with tf.compat.v1.variable_scope('proj'):
+            w = tf.compat.v1.get_variable('proj_weight', [self._num_units, x_dim])
             x = tf.matmul(output, w)
         return x, nstate
 
@@ -59,15 +60,15 @@ class MultiInputRNNCell(RNNCell):
                                              for i in range(nlayers)])
 
     def __call__(self, x, y, state, scope=None):
-        with tf.variable_scope(scope or 'multi_input_rnn'):
+        with tf.compat.v1.variable_scope(scope or 'multi_input_rnn'):
             x_dim = int(x.get_shape()[1])
             y = tf.tile(tf.reshape(y, [-1, 1]), [1, x_dim])
             inputs = tf.concat([x, y], axis=1, name='inputs')
             output, nstate = self.rnncell(inputs, state)
-            with tf.variable_scope('proj'):
-                w = tf.get_variable('proj_weight',
+            with tf.compat.v1.variable_scope('proj'):
+                w = tf.compat.v1.get_variable('proj_weight',
                     [self.cell.output_size.as_list()[0], x_dim])
-                b = tf.get_variable('proj_bias', [x_dim])
+                b = tf.compat.v1.get_variable('proj_bias', [x_dim])
                 x = tf.matmul(output, w) + b
             return x, nstate
 
@@ -97,19 +98,19 @@ class StochasticRNNCell(RNNCell):
     def __call__(self, x, y, state, scope=None):
         hidden_size = self.cell.output_size.as_list()[0]
         batch_size = x.get_shape().as_list()[0]
-        with tf.variable_scope(scope or 'multi_input_rnn'):
+        with tf.compat.v1.variable_scope(scope or 'multi_input_rnn'):
             x_dim = int(x.get_shape()[1])
             y = tf.tile(tf.reshape(y, [-1, 1]), [1, x_dim])
             inputs = tf.concat([x, y], axis=1, name='inputs')
             output, nstate = self.rnncell(inputs, state)
             tot_dim = x_dim * (x_dim + 1)
-            with tf.variable_scope('proj'):
-                w = tf.get_variable('proj_weight', [hidden_size, tot_dim])
-                b = tf.get_variable('proj_bias', [tot_dim])
+            with tf.compat.v1.variable_scope('proj'):
+                w = tf.compat.v1.get_variable('proj_weight', [hidden_size, tot_dim])
+                b = tf.compat.v1.get_variable('proj_bias', [tot_dim])
                 out = tf.matmul(output, w) + b
                 mean, var = tf.split(out, [x_dim, x_dim ** 2], axis=1)
                 var = tf.reshape(var, [batch_size, x_dim, x_dim])
-                dist = tf.contrib.distributions.MultivariateNormalTriL(
+                dist = tfp.distributions.MultivariateNormalTriL(
                     mean, var, name='x_dist')
                 x = dist.sample()
 
@@ -153,7 +154,7 @@ class LSTM(RNNCell):
                name="lstm"):
         super(LSTM, self).__init__()
         self.name_ = name
-        self._template = tf.make_template(self.name_, self._build,
+        self._template = tf.compat.v1.make_template(self.name_, self._build,
                                           create_scope_now_=True)
         self._hidden_size = hidden_size
         self._forget_bias = forget_bias
@@ -267,25 +268,25 @@ class LSTM(RNNCell):
         gamma_initializer = tf.constant_initializer(0.1)
 
         if self._use_batch_norm_h:
-            self._gamma_h = tf.get_variable(
+            self._gamma_h = tf.compat.v1.get_variable(
               LSTM.GAMMA_H,
               shape=[4 * self._hidden_size],
               dtype=dtype,
               initializer=(self._initializers.get(LSTM.GAMMA_H, gamma_initializer)))
         if self._use_batch_norm_x:
-            self._gamma_x = tf.get_variable(
+            self._gamma_x = tf.compat.v1.get_variable(
               LSTM.GAMMA_X,
               shape=[4 * self._hidden_size],
               dtype=dtype,
               initializer=(self._initializers.get(LSTM.GAMMA_X, gamma_initializer)))
         if self._use_batch_norm_c:
-            self._gamma_c = tf.get_variable(
+            self._gamma_c = tf.compat.v1.get_variable(
                 LSTM.GAMMA_C,
                 shape=[self._hidden_size],
                 dtype=dtype,
                 initializer=(
                     self._initializers.get(LSTM.GAMMA_C, gamma_initializer)))
-            self._beta_c = tf.get_variable(
+            self._beta_c = tf.compat.v1.get_variable(
                 LSTM.BETA_C,
                 shape=[self._hidden_size],
                 dtype=dtype,
@@ -304,23 +305,23 @@ class LSTM(RNNCell):
         initializer = util.create_linear_initializer(equiv_input_size)
 
         if self._use_batch_norm_h or self._use_batch_norm_x:
-            self._w_h = tf.get_variable(
+            self._w_h = tf.compat.v1.get_variable(
                 LSTM.W_GATES + "_H",
                 shape=[self._hidden_size, 4 * self._hidden_size],
                 dtype=dtype,
                 initializer=self._initializers.get(LSTM.W_GATES, initializer))
-            self._w_x = tf.get_variable(
+            self._w_x = tf.compat.v1.get_variable(
                 LSTM.W_GATES + "_X",
                 shape=[input_size, 4 * self._hidden_size],
                 dtype=dtype,
                 initializer=self._initializers.get(LSTM.W_GATES, initializer))
         else:
-            self._w_xh = tf.get_variable(
+            self._w_xh = tf.compat.v1.get_variable(
                 LSTM.W_GATES,
                 shape=[self._hidden_size + input_size, 4 * self._hidden_size],
                 dtype=dtype,
                 initializer=self._initializers.get(LSTM.W_GATES, initializer))
-            self._b = tf.get_variable(
+            self._b = tf.compat.v1.get_variable(
                 LSTM.B_GATES,
                 shape=b_shape,
                 dtype=dtype,
@@ -328,17 +329,17 @@ class LSTM(RNNCell):
 
     def _create_peephole_variables(self, dtype):
         """Initialize the variables used for the peephole connections."""
-        self._w_f_diag = tf.get_variable(
+        self._w_f_diag = tf.compat.v1.get_variable(
             LSTM.W_F_DIAG,
             shape=[self._hidden_size],
             dtype=dtype,
             initializer=self._initializers.get(LSTM.W_F_DIAG))
-        self._w_i_diag = tf.get_variable(
+        self._w_i_diag = tf.compat.v1.get_variable(
             LSTM.W_I_DIAG,
             shape=[self._hidden_size],
             dtype=dtype,
             initializer=self._initializers.get(LSTM.W_I_DIAG))
-        self._w_o_diag = tf.get_variable(
+        self._w_o_diag = tf.compat.v1.get_variable(
             LSTM.W_O_DIAG,
             shape=[self._hidden_size],
             dtype=dtype,

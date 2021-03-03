@@ -17,17 +17,17 @@ class Optimizer:
         self.make_loss(func, ndim, batch_size, unroll_len)
         loss_func = self.get_loss_func(loss_type, direction)
         self.loss = loss_func(self.fx_array)
-        optimizer = getattr(tf.train, optimizer + 'Optimizer')(lr)
+        optimizer = getattr(tf.compat.v1.train, optimizer + 'Optimizer')(lr)
         gvs = optimizer.compute_gradients(self.loss)
         capped_gvs = [(tf.clip_by_value(grad, -0.1, 0.1), var) for grad, var in gvs]
         self.opt = optimizer.apply_gradients(capped_gvs)
 
         # self.opt = optimizer.minimize(self.loss)
-        self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=3)
+        self.saver = tf.compat.v1.train.Saver(tf.compat.v1.global_variables(), max_to_keep=3)
         logger.info('model variable:')
-        logger.info(str([var.name for var in tf.global_variables()]))
+        logger.info(str([var.name for var in tf.compat.v1.global_variables()]))
         logger.info('trainable variables:')
-        logger.info(str([var.name for var in tf.trainable_variables()]))
+        logger.info(str([var.name for var in tf.compat.v1.trainable_variables()]))
         self.fx_array = self.fx_array.stack()
         self.x_array = self.x_array.stack()
 
@@ -35,11 +35,11 @@ class Optimizer:
     def make_discount(self, gamma, unroll_len):
         df = [(gamma ** (unroll_len - i)) for i in range(unroll_len + 1)]
         return tf.constant(df, shape=[unroll_len + 1, 1], dtype=tf.float32)
-    
+
 
     def make_loss(self, func, ndim, batch_size, unroll_len):
         self.unroll_len = unroll_len
-        x = tf.get_variable('x', shape=[batch_size, ndim],
+        x = tf.compat.v1.get_variable('x', shape=[batch_size, ndim],
                             initializer=tf.truncated_normal_initializer(mean=0.5, stddev=0.2),
                             trainable=self.trainable_init)
         constants = func.get_parameters()
@@ -81,7 +81,7 @@ class Optimizer:
 
             variables = [x,] + constants
             # Empty array as part of the reset process.
-            self.reset = [tf.variables_initializer(variables),
+            self.reset = [tf.compat.v1.variables_initializer(variables),
                 self.fx_array.close(), self.x_array.close()]
 
         return self.fx_array, self.x_array
