@@ -23,7 +23,7 @@ def main():
     config = json.load(config_file,
                        object_hook=lambda d:namedtuple('x', d.keys())(*d.values()))
     num_unrolls = config.num_steps // config.unroll_length
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         model = util.load_model(sess, config, logger)
         all_y = []
         for i in range(10):

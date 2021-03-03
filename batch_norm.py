@@ -32,7 +32,7 @@ class BatchNorm():
 
     def _build_statistics_variance(self, input_batch,
         reduction_indices, use_batch_stats):
-        self._moving_mean = tf.get_variable(
+        self._moving_mean = tf.compat.v1.get_variable(
             "moving_mean",
             shape=self._mean_shape,
             collections=[tf.GraphKeys.MOVING_AVERAGE_VARIABLES,
@@ -40,7 +40,7 @@ class BatchNorm():
             initializer=tf.zeros_initializer,
             trainable=False)
 
-        self._moving_variance = tf.get_variable(
+        self._moving_variance = tf.compat.v1.get_variable(
             "moving_variance",
             shape=self._mean_shape,
             collections=[tf.GraphKeys.MOVING_AVERAGE_VARIABLES,
@@ -81,7 +81,7 @@ class BatchNorm():
 
     def _build_statistics_second_moment(self, input_batch,
         reduction_indices, use_batch_stats):
-        self._moving_mean = tf.get_variable(
+        self._moving_mean = tf.compat.v1.get_variable(
             "moving_mean",
             shape=self._mean_shape,
             collections=[tf.GraphKeys.MOVING_AVERAGE_VARIABLES,
@@ -89,7 +89,7 @@ class BatchNorm():
             initializer=tf.zeros_initializer,
             trainable=False)
 
-        self._moving_second_moment = tf.get_variable(
+        self._moving_second_moment = tf.compat.v1.get_variable(
             "moving_second_moment",
             shape=self._mean_shape,
             collections=[tf.GraphKeys.MOVING_AVERAGE_VARIABLES,
@@ -252,7 +252,7 @@ class BatchNorm():
             # Set up optional scale and offset factors.
         if self._offset:
             self._set_default_initializer(self.BETA)
-            self._beta = tf.get_variable(
+            self._beta = tf.compat.v1.get_variable(
                 self.BETA,
                 shape=self._mean_shape,
                 initializer=self._initializers[self.BETA])
@@ -261,7 +261,7 @@ class BatchNorm():
 
         if self._scale:
             self._set_default_initializer(self.GAMMA)
-            self._gamma = tf.get_variable(
+            self._gamma = tf.compat.v1.get_variable(
                 self.GAMMA,
                 shape=self._mean_shape,
                 initializer=self._initializers[self.GAMMA])

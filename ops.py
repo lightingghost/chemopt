@@ -5,7 +5,7 @@ import mock
 
 def wrap_variable_creation(func, custom_getter):
     """Provides a custom getter for all variable creations."""
-    original_get_variable = tf.get_variable
+    original_get_variable = tf.compat.v1.get_variable
     def custom_get_variable(*args, **kwargs):
         if hasattr(kwargs, 'custom_getter'):
             raise AttributeError('Custom getters are not supported for '

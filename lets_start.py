@@ -22,7 +22,7 @@ def main():
     logger.info(str(json.load(config_file)))
     config_file.close()
     num_unrolls = config.num_steps // config.unroll_length
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         # tf.get_default_graph().finalize()
         model = util.create_model(sess, config, logger)
         step, loss, reset, fx_array, x_array = model.step()

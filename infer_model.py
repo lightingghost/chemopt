@@ -28,7 +28,7 @@ class StepOptimizer:
         self.init_state = self.cell.get_initial_state(1, tf.float32)
         self.results = self.build_graph()
 
-        self.saver = tf.train.Saver(tf.global_variables())
+        self.saver = tf.compat.v1.train.Saver(tf.compat.v1.global_variables())
 
     def get_state_shapes(self):
         return [(s[0].get_shape().as_list(), s[1].get_shape().as_list())
@@ -78,7 +78,7 @@ class StepOptimizer:
         return x, y, init_state
 
     def run(self):
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             self.load(sess, self.ckpt_path)
             x, y, state = self.get_init()
             x_array = np.zeros((self.nsteps + 1, self.ndim))
@@ -147,6 +147,6 @@ def main():
     ax2.plot(x_array[:, 0], x_array[:, 1], x_array[:, 2])
     fig2.show()
     plt.show()
-    
+
 if __name__ == '__main__':
     main()

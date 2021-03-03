@@ -69,10 +69,10 @@ def test_tf():
     xr = list(np.arange(0, 1, 0.02))
     X = np.array(list(product(xr, repeat=2)))
     Y = []
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         gmm = tf_GMM(batch_size=1, ncoef=6, num_dims=2, cov=0.5)
         y = gmm(tf.placeholder(tf.float32, shape=[1, 2], name='x'))
-        sess.run(tf.global_variables_initializer())
+        sess.run(tf.compat.v1.global_variables_initializer())
         for x in X:
             Y.append(sess.run(y, feed_dict={'x:0':x.reshape((1, 2))}))
 
